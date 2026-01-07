@@ -119,24 +119,34 @@ public class StudentGradingSystem {
 
             System.out.println("ID: " + data[0]);
             System.out.println("Name: " + data[1]);
-            System.out.println("Subjects & Marks:");
+            System.out.println("Subjects:");
 
             String[] subjectData = data[2].split(",");
+
             for (String s : subjectData) {
                 if (!s.isEmpty()) {
-                    System.out.println("  - " + s.replace(":", ": "));
+                    String[] parts = s.split(":");
+                    String subject = parts[0];
+                    int mark = Integer.parseInt(parts[1]);
+
+                    if (mark < 50) {
+                        System.out.println("  - " + subject + ": " + mark + " ❌ FAILED");
+                    } else {
+                        System.out.println("  - " + subject + ": " + mark);
+                    }
                 }
             }
 
             System.out.println("Average: " + data[data.length - 2]);
             System.out.println("Grade: " + data[data.length - 1]);
-            System.out.println("-------------------------");
+            System.out.println("---------------------------");
         }
 
     } catch (IOException e) {
         System.out.println("No records found.");
     }
 }
+
 
 
     // ---------------- UPDATE STUDENT ----------------
@@ -231,4 +241,62 @@ public class StudentGradingSystem {
             System.out.println("File write error.");
         }
     }
+    // ---------------- SUBJECT STATISTICS ----------------
+    static void subjectStatistics() {
+    Map<String, List<Integer>> subjectMarks = new HashMap<>();
+
+    try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
+        String line;
+
+        while ((line = br.readLine()) != null) {
+            String[] data = line.split("\\|");
+            String[] subjects = data[2].split(",");
+
+            for (String s : subjects) {
+                if (!s.isEmpty()) {
+                    String[] parts = s.split(":");
+                    String subjectName = parts[0];
+                    int mark = Integer.parseInt(parts[1]);
+
+                    subjectMarks
+                        .computeIfAbsent(subjectName, k -> new ArrayList<>())
+                        .add(mark);
+                }
+            }
+        }
+
+    } catch (IOException e) {
+        System.out.println("Error reading file.");
+        return;
+    }
+
+    if (subjectMarks.isEmpty()) {
+        System.out.println("No subject data available.");
+        return;
+    }
+
+    System.out.println("\n--- SUBJECT LEVEL STATISTICS ---");
+
+    for (String subject : subjectMarks.keySet()) {
+        List<Integer> marks = subjectMarks.get(subject);
+
+        int total = 0;
+        int highest = Integer.MIN_VALUE;
+        int lowest = Integer.MAX_VALUE;
+
+        for (int m : marks) {
+            total += m;
+            highest = Math.max(highest, m);
+            lowest = Math.min(lowest, m);
+        }
+
+        double average = total / (double) marks.size();
+
+        System.out.println("\nSubject: " + subject);
+        System.out.println("Average: " + average);
+        System.out.println("Highest: " + highest);
+        System.out.println("Lowest: " + lowest);
+    }
+}
+
 }
