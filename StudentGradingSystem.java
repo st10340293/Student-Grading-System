@@ -54,7 +54,8 @@ public class StudentGradingSystem {
             System.out.println("3. Update Student");
             System.out.println("4. Delete Student");
             System.out.println("5. Class Statistics");
-            System.out.println("6. Exit");
+            System.out.println("6. Subject Statistics");
+            System.out.println("7. Exit");
             System.out.print("Choose option: ");
 
             int choice = sc.nextInt();
@@ -66,7 +67,8 @@ public class StudentGradingSystem {
                 case 3 -> updateStudent();
                 case 4 -> deleteStudent();
                 case 5 -> classStatistics();
-                case 6 -> System.exit(0);
+                case 6 -> subjectStatistics();
+                case 7 -> System.exit(0);
                 default -> System.out.println("Invalid choice!");
             }
         }
