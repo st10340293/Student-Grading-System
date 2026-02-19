@@ -1,304 +1,96 @@
 import java.io.*;
 import java.util.*;
 
-class Student {
-    String id;
-    String name;
-    String[] subjects;
-    int[] marks;
-    double average;
-    char grade;
+public class StudentGradingSystem {
+    private List<Student> students;
+    private static final String FILE_PATH = "students.txt";
 
-    public Student(String id, String name, String[] subjects, int[] marks) {
+    public StudentGradingSystem() {
+        students = new ArrayList<>();
+        loadStudents();
+    }
+
+    // Load students from file
+    private void loadStudents() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_PATH))) {
+            students = (List<Student>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading students: " + e.getMessage());
+        }
+    }
+
+    // Update student details and write back to file
+    public void updateStudent(int id, String name, String grade) {
+        for (Student student : students) {
+            if (student.getId() == id) {
+                student.setName(name);
+                student.setGrade(grade);
+                saveStudents(); // Persist changes
+                return;
+            }
+        }
+        System.out.println("Student not found.");
+    }
+
+    // Persist student data to file
+    private void saveStudents() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
+            oos.writeObject(students);
+        } catch (IOException e) {
+            System.out.println("Error saving students: " + e.getMessage());
+        }
+    }
+
+    // Convert student data to a String for file writing
+    public String toFileString() {
+        StringBuilder sb = new StringBuilder();
+        for (Student student : students) {
+            sb.append(student.toString()).append('\n');
+        }
+        return sb.toString();
+    }
+
+    // Add other methods as needed
+    public static void main(String[] args) {
+        StudentGradingSystem sgs = new StudentGradingSystem();
+        // Example usage
+        sgs.updateStudent(1, "John Doe", "A");
+    }
+}
+
+class Student implements Serializable {
+    private int id;
+    private String name;
+    private String grade;
+
+    public Student(int id, String name, String grade) {
         this.id = id;
         this.name = name;
-        this.subjects = subjects;
-        this.marks = marks;
-        calculateAverage();
-        assignGrade();
+        this.grade = grade;
     }
 
-    void calculateAverage() {
-        int total = 0;
-        for (int m : marks) total += m;
-        average = total / (double) marks.length;
+    public int getId() {
+        return id;
     }
 
-    void assignGrade() {
-        if (average >= 75) grade = 'A';
-        else if (average >= 65) grade = 'B';
-        else if (average >= 55) grade = 'C';
-        else if (average >= 45) grade = 'D';
-        else grade = 'F';
+    public String getName() {
+        return name;
     }
 
-    String toFileString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < subjects.length; i++) {
-            sb.append(subjects[i]).append(":").append(marks[i]).append(",");
-        }
-        return id + "|" + name + "|" + sb + average + "|" + grade;
-    }
-}
-
-public class StudentGradingSystem {
-
-    static final String FILE_NAME = "students.txt";
-    static Scanner sc = new Scanner(System.in);
-
-    public static void main(String[] args) {
-        while (true) {
-            System.out.println("\n===== STUDENT GRADING SYSTEM =====");
-            System.out.println("1. Add Student");
-            System.out.println("2. View Students");
-            System.out.println("3. Update Student");
-            System.out.println("4. Delete Student");
-            System.out.println("5. Class Statistics");
-            System.out.println("6. Subject Statistics");
-            System.out.println("7. Exit");
-            System.out.print("Choose option: ");
-
-            int choice = sc.nextInt();
-            sc.nextLine();
-
-            switch (choice) {
-                case 1 -> addStudent();
-                case 2 -> viewStudents();
-                case 3 -> updateStudent();
-                case 4 -> deleteStudent();
-                case 5 -> classStatistics();
-                case 6 -> subjectStatistics();
-                case 7 -> System.exit(0);
-                default -> System.out.println("Invalid choice!");
-            }
-        }
+    public void setName(String name) {
+        this.name = name;
     }
 
-    // ---------------- ADD STUDENT ----------------
-    static void addStudent() {
-    try (FileWriter fw = new FileWriter(FILE_NAME, true)) {
-
-        System.out.print("Student ID: ");
-        String id = sc.nextLine();
-
-        System.out.print("Student Name: ");
-        String name = sc.nextLine();
-
-        System.out.print("Number of subjects: ");
-        int n = sc.nextInt();
-        sc.nextLine();
-
-        String[] subjects = new String[n];
-        int[] marks = new int[n];
-
-        for (int i = 0; i < n; i++) {
-            System.out.print("Subject name: ");
-            subjects[i] = sc.nextLine();
-
-            System.out.print("Mark for " + subjects[i] + ": ");
-            marks[i] = sc.nextInt();
-            sc.nextLine();
-        }
-
-        Student s = new Student(id, name, subjects, marks);
-        fw.write(s.toFileString() + "\n");
-
-        System.out.println("Student added successfully!");
-
-    } catch (IOException e) {
-        System.out.println("File error!");
-    }
-}
-
-    // ---------------- VIEW STUDENTS ----------------
-    static void viewStudents() {
-    try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
-        String line;
-        System.out.println("\n--- STUDENT RECORDS ---");
-
-        while ((line = br.readLine()) != null) {
-            String[] data = line.split("\\|");
-
-            System.out.println("ID: " + data[0]);
-            System.out.println("Name: " + data[1]);
-            System.out.println("Subjects:");
-
-            String[] subjectData = data[2].split(",");
-
-            for (String s : subjectData) {
-                if (!s.isEmpty()) {
-                    String[] parts = s.split(":");
-                    String subject = parts[0];
-                    int mark = Integer.parseInt(parts[1]);
-
-                    if (mark < 50) {
-                        System.out.println("  - " + subject + ": " + mark + " ❌ FAILED");
-                    } else {
-                        System.out.println("  - " + subject + ": " + mark);
-                    }
-                }
-            }
-
-            System.out.println("Average: " + data[data.length - 2]);
-            System.out.println("Grade: " + data[data.length - 1]);
-            System.out.println("---------------------------");
-        }
-
-    } catch (IOException e) {
-        System.out.println("No records found.");
-    }
-}
-
-
-
-    // ---------------- UPDATE STUDENT ----------------
-    static void updateStudent() {
-        List<String> students = readAll();
-        System.out.print("Enter ID to update: ");
-        String id = sc.nextLine();
-        boolean found = false;
-
-        for (int i = 0; i < students.size(); i++) {
-            if (students.get(i).startsWith(id + "|")) {
-                found = true;
-                System.out.print("New name: ");
-                String name = sc.nextLine();
-
-                System.out.print("Number of subjects: ");
-                int n = sc.nextInt();
-                sc.nextLine();
-
-                String[] subjects = new String[n];
-                int[] marks = new int[n];
-
-                for (int j = 0; j < n; j++) {
-                    System.out.print("Subject name: ");
-                    subjects[j] = sc.nextLine();
-
-                    System.out.print("Mark for " + subjects[j] + ": ");
-                    marks[j] = sc.nextInt();
-                    sc.nextLine();
-                }
-
-                Student s = new Student(id, name, subjects, marks);
-                students.set(i, s.toFileString());
-
-                    }
-        }
+    public String getGrade() {
+        return grade;
     }
 
-    // ---------------- DELETE STUDENT ----------------
-    static void deleteStudent() {
-        List<String> students = readAll();
-        System.out.print("Enter ID to delete: ");
-        String id = sc.nextLine();
-
-        boolean removed = students.removeIf(s -> s.startsWith(id + "|"));
-        writeAll(students);
-
-        if (removed) System.out.println("Student deleted.");
-        else System.out.println("Student not found.");
+    public void setGrade(String grade) {
+        this.grade = grade;
     }
 
-    // ---------------- CLASS STATISTICS ----------------
-    static void classStatistics() {
-        List<String> students = readAll();
-        if (students.isEmpty()) {
-            System.out.println("No data available.");
-            return;
-        }
-
-        double totalAvg = 0;
-        double highest = Double.MIN_VALUE;
-        double lowest = Double.MAX_VALUE;
-
-        for (String s : students) {
-            String[] data = s.split("\\|");
-            double avg = Double.parseDouble(data[data.length - 2]);
-            totalAvg += avg;
-            highest = Math.max(highest, avg);
-            lowest = Math.min(lowest, avg);
-        }
-
-        System.out.println("\n--- CLASS STATISTICS ---");
-        System.out.println("Class Average: " + (totalAvg / students.size()));
-        System.out.println("Highest Average: " + highest);
-        System.out.println("Lowest Average: " + lowest);
+    @Override
+    public String toString() {
+        return id + "|" + name + "|" + grade;
     }
-
-    // ---------------- FILE HELPERS ----------------
-    static List<String> readAll() {
-        List<String> list = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
-            String line;
-            while ((line = br.readLine()) != null) list.add(line);
-        } catch (IOException ignored) {}
-        return list;
-    }
-
-    static void writeAll(List<String> list) {
-        try (FileWriter fw = new FileWriter(FILE_NAME)) {
-            for (String s : list) fw.write(s + "\n");
-        } catch (IOException e) {
-            System.out.println("File write error.");
-        }
-    }
-    // ---------------- SUBJECT STATISTICS ----------------
-    static void subjectStatistics() {
-    Map<String, List<Integer>> subjectMarks = new HashMap<>();
-
-    try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
-        String line;
-
-        while ((line = br.readLine()) != null) {
-            String[] data = line.split("\\|");
-            String[] subjects = data[2].split(",");
-
-            for (String s : subjects) {
-                if (!s.isEmpty()) {
-                    String[] parts = s.split(":");
-                    String subjectName = parts[0];
-                    int mark = Integer.parseInt(parts[1]);
-
-                    subjectMarks
-                        .computeIfAbsent(subjectName, k -> new ArrayList<>())
-                        .add(mark);
-                }
-            }
-        }
-
-    } catch (IOException e) {
-        System.out.println("Error reading file.");
-        return;
-    }
-
-    if (subjectMarks.isEmpty()) {
-        System.out.println("No subject data available.");
-        return;
-    }
-
-    System.out.println("\n--- SUBJECT LEVEL STATISTICS ---");
-
-    for (String subject : subjectMarks.keySet()) {
-        List<Integer> marks = subjectMarks.get(subject);
-
-        int total = 0;
-        int highest = Integer.MIN_VALUE;
-        int lowest = Integer.MAX_VALUE;
-
-        for (int m : marks) {
-            total += m;
-            highest = Math.max(highest, m);
-            lowest = Math.min(lowest, m);
-        }
-
-        double average = total / (double) marks.size();
-
-        System.out.println("\nSubject: " + subject);
-        System.out.println("Average: " + average);
-        System.out.println("Highest: " + highest);
-        System.out.println("Lowest: " + lowest);
-    }
-}
-
 }
