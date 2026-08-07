@@ -23,11 +23,18 @@ public class StudentGradingSystem {
         return students.removeIf(s -> s.getId() == id);
     }
 
-    public boolean updateStudent(int id, String name, double mark) {
+    public boolean updateStudentDetails(int id, String name, int gradeLevel) {
         Student s = findById(id);
         if (s == null) return false;
         s.setName(name);
-        s.setMark(mark);
+        s.setGradeLevel(gradeLevel);
+        return true;
+    }
+
+    public boolean addSubjectToStudent(int id, String subject, double mark) {
+        Student s = findById(id);
+        if (s == null) return false;
+        s.addSubject(subject, mark);
         return true;
     }
 
@@ -42,20 +49,26 @@ public class StudentGradingSystem {
         return students;
     }
 
+    // Mean of each student's own average, not a mark-by-mark mean --
+    // keeps students with more subjects from skewing the class figure.
     public double classAverage() {
         if (students.isEmpty()) return 0.0;
         double sum = 0;
-        for (Student s : students) sum += s.getMark();
+        for (Student s : students) sum += s.getAverage();
         return sum / students.size();
     }
 
-    // Plain CSV persistence: id,name,mark per line. One clear format,
-    // no mismatch between save format and load format.
+    // CSV format: id,name,gradeLevel,subject:mark;subject:mark;...
     public void save() {
         if (filePath == null) return;
         try (PrintWriter pw = new PrintWriter(new FileWriter(filePath))) {
             for (Student s : students) {
-                pw.println(s.getId() + "," + s.getName() + "," + s.getMark());
+                StringBuilder subjectsPart = new StringBuilder();
+                for (Map.Entry<String, Double> entry : s.getSubjects().entrySet()) {
+                    if (subjectsPart.length() > 0) subjectsPart.append(";");
+                    subjectsPart.append(entry.getKey()).append(":").append(entry.getValue());
+                }
+                pw.println(s.getId() + "," + s.getName() + "," + s.getGradeLevel() + "," + subjectsPart);
             }
         } catch (IOException e) {
             System.out.println("Error saving students: " + e.getMessage());
@@ -69,11 +82,18 @@ public class StudentGradingSystem {
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.isBlank()) continue;
-                String[] parts = line.split(",", 3);
+                String[] parts = line.split(",", 4);
                 int id = Integer.parseInt(parts[0].trim());
                 String name = parts[1].trim();
-                double mark = Double.parseDouble(parts[2].trim());
-                students.add(new Student(id, name, mark));
+                int gradeLevel = Integer.parseInt(parts[2].trim());
+                Student student = new Student(id, name, gradeLevel);
+                if (parts.length > 3 && !parts[3].isBlank()) {
+                    for (String pair : parts[3].split(";")) {
+                        String[] kv = pair.split(":", 2);
+                        student.addSubject(kv[0].trim(), Double.parseDouble(kv[1].trim()));
+                    }
+                }
+                students.add(student);
             }
         } catch (IOException e) {
             System.out.println("Error loading students: " + e.getMessage());

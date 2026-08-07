@@ -5,10 +5,11 @@ Java console app for managing student records and grades.
 ## Features
 
 - Add, update, delete, list students
-- Auto-computed letter grade (A–F) from numeric mark
-- Class average calculation
+- Each student has a grade level (8–12) and any number of subjects, each with its own mark
+- Auto-computed letter grade (A–F) from a student's average mark across subjects
+- Class average (mean of each student's own average)
 - Plain-text CSV persistence (`students.csv`) — human-readable, no binary serialization
-- Input validation (marks must be 0–100, no duplicate IDs)
+- Input validation (marks 0–100, grade level 8–12, no duplicate student IDs)
 
 ## Structure
 
@@ -26,7 +27,9 @@ cd out
 java Main
 ```
 
-Data saves to `students.csv` in the working directory on exit (option 6).
+Data saves to `students.csv` in the working directory on exit (option 7).
+
+CSV format: `id,name,gradeLevel,subject:mark;subject:mark;...`
 
 ## Run tests
 
