@@ -1,3 +1,0 @@
-001|lee|70,50,74,77,67.75|B
-002|ray|90,56,88,73,76.75|A
-003|sammy|maths:78,english:80,physics:58,chemistry:66,70.5|B

@@ -2,3 +2,11 @@
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md
+
+students.csv
+
+*.class
